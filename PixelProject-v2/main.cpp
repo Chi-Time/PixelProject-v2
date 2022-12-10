@@ -2,8 +2,10 @@
 #include <SDL.h>
 
 #include <iostream>
+#include <format>
 
 #include "Game.h"
+#include "Scripts/Utility/Console.h"
 
 void PrintInGameCommands();
 bool CreateWindowAndContext();
@@ -21,7 +23,7 @@ int main(int argc, char* argv[])
     Game game(&g_context, g_window);
     if (!success || !game.Initialize())
     {
-        printf("PixelProject failed to Initialize");
+        Console::PrintError("PixelProject failed to initialize!\n");
         success = false;
     }
 
@@ -45,13 +47,13 @@ bool CreateWindowAndContext()
     );
 
     if (g_window == nullptr) {
-        printf("Window could not be created!\nSDL Err: %s\n", SDL_GetError());
+        Console::PrintError(std::string("Window could not be created!\nSDL Err: %s\n", SDL_GetError()));
         success = false;
     }
     g_context = SDL_GL_CreateContext(g_window);
     if (g_context == nullptr)
     {
-        printf("OpenGL context could not be created! SDL Err: %s\n", SDL_GetError());
+        Console::PrintError(std::string("OpenGL context could not be created! SDL Err: %s\n", SDL_GetError()));
         success = false;
     }
     else
@@ -59,7 +61,7 @@ bool CreateWindowAndContext()
         // Vsync cause we're bad
         if (SDL_GL_SetSwapInterval(1) < 0)
         {
-            printf("Warning: Unable to set VSync! SDL Error: %s\n", SDL_GetError());
+            Console::PrintWarning(std::string("Unable to set VSync! SDL Error: %s\n", SDL_GetError()));
         }
         glClearColor(0.01f, 0.01f, 0.01f, 1.0f);
     }
@@ -67,10 +69,11 @@ bool CreateWindowAndContext()
     GLenum err = glewInit();
     if (GLEW_OK != err)
     {
-        /* Problem: glewInit failed, something is seriously wrong. */
-        std::cerr << "Error: " << glewGetErrorString(err) << std::endl;
+        // Convert GLubyte * to char *
+        auto errStr = reinterpret_cast<const char*>(glewGetErrorString(err));
+        Console::PrintError(std::string("GLEW failed to initialize! GLEW Err: %s\n", errStr));
         success = false;
     }
-    std::cerr << "Status: Using GLEW " << glewGetString(GLEW_VERSION) << std::endl;
+    Console::PrintSuccess("OpenGL context created successfully!\n");
     return success;
 }
